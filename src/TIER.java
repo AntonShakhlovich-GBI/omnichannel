@@ -32,7 +32,13 @@ public enum TIER {
 
     public TIER next() {
         TIER[] tiers = values(); // Get all enum values
-        int nextIndex = (this.ordinal() + 1) % tiers.length; // Circular iteration
+        int nextIndex = (this.ordinal() + 1) % tiers.length;
         return tiers[nextIndex];
+    }
+
+    public TIER previous() {
+        TIER[] tiers = values(); // Get all enum values
+        int previousIndex = (this.ordinal() - 1) % tiers.length;
+        return tiers[previousIndex];
     }
 }

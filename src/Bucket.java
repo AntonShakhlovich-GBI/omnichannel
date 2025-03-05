@@ -1,6 +1,10 @@
 import java.util.LinkedList;
 
 public class Bucket {
+    public TIER getTier() {
+        return tier;
+    }
+
     private final TIER tier;
     private final int size;
     private final LinkedList<Product> products = new LinkedList<>();
@@ -11,7 +15,13 @@ public class Bucket {
     }
 
     public void addProduct(Product product) {
+        product.setTier(tier);
         products.add(product);
+    }
+
+    public void addProductFirst(Product product) {
+        product.setTier(tier);
+        products.addFirst(product);
     }
 
     public Product getLastProductAndRemove() {
@@ -29,6 +39,10 @@ public class Bucket {
 
     public boolean isEmpty() {
         return products.isEmpty();
+    }
+
+    public boolean isFull() {
+        return products.size() == size;
     }
 
     public LinkedList<Product> getProducts() {

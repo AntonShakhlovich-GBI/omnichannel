@@ -1,40 +1,96 @@
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Main {
     public static void main(String[] args) {
         // Settings
-        int pageSize = 32;
-        double originalDistributionRate = 0.2;
-        double multiplier = 5;
-        double maxVisibility = 0.9;
+        int pageSize = 120;
+        double originalDistributionRate = 0.6;
+        double multiplier = 1.3;
+        double visibilityLimit = 0.9;
 
         ArrayList<Product> products = generateProducts(pageSize, originalDistributionRate);
-
-        long startTime = System.nanoTime();
+        for (Product product : products) {
+            System.out.println(product.toColoredString());
+        }
 
         ArrayList<Product> finalProductList = new ArrayList<>(pageSize);
         while (finalProductList.size() < pageSize) {
             finalProductList.add(null); // Placeholder elements
         }
 
-        Map<TIER, Bucket> buckets = getBuckets(products);
-
-        for (Product product : products) {
-            System.out.println(product);
-        }
-
         int originalP1Score = getScore(products, TYPE.P1);
         int originalP3Score = getScore(products, TYPE.P3);
         int overallScore = originalP1Score + originalP3Score;
         double originalVisibility = (double) originalP1Score / overallScore;
+        double targetVisibility = Math.min(originalVisibility * multiplier, visibilityLimit);
+
+
+        long startTime = System.nanoTime();
+
+        // Check If Reordering Algorithm need to be triggered
+        Map<TIER, Bucket> bucketsWithMinimalScore = generateP3BucketsMinimalScore(products);
+        int minimalScore = 0;
+        for (Bucket bucket : bucketsWithMinimalScore.values()) {
+            minimalScore += getScore(bucket.getProducts(), TYPE.P3);
+        }
+
+        double maximumVisibility = 1 - (double) minimalScore / overallScore;
+
+        Map<TIER, Bucket> buckets;
+        if (maximumVisibility < targetVisibility) {
+            buckets = bucketsWithMinimalScore;
+        } else {
+            buckets = generateP3BucketsSmart(products, originalP3Score, originalVisibility, targetVisibility, overallScore);
+        }
+
+        fillP3Product(finalProductList, buckets);
+        fillP1Product(finalProductList, products);
+
+        System.out.println(originalP1Score);
+        System.out.println(originalP3Score);
+        System.out.println(originalVisibility);
+        // System.out.println(currentVisibility);
+
+        for (int i = 0; i < finalProductList.size(); i++) {
+            System.out.println(i + ": " + finalProductList.get(i).toColoredString());
+        }
+
+        long endTime = System.nanoTime();
+        long duration = endTime - startTime;
+
+        System.out.println("Execution time: " + duration / 1_000_000 + " ms");
+    }
+
+    private static Map<TIER, Bucket> generateP3BucketsMinimalScore(ArrayList<Product> products) {
+        Map<TIER, Bucket> buckets = generateBuckets(products);
+        Bucket currentBucket = buckets.values().stream().max(Comparator.comparingInt(b -> b.getTier().ordinal())).orElse(null);
+
+        for (int i = products.size() - 1; i >= 0; i--) {
+            Product product = products.get(i);
+            if (product.getType() == TYPE.P3) {
+                if (currentBucket.isFull()) {
+                    currentBucket = buckets.get(currentBucket.getTier().previous());
+                }
+                Product clonedProduct = product.clone();
+                currentBucket.addProductFirst(clonedProduct);
+            }
+        }
+        return buckets;
+    }
+
+    private static Map<TIER, Bucket> generateP3BucketsSmart(ArrayList<Product> products, int originalP3Score, double originalVisibility, double targetVisibility, double overallScore) {
+        Map<TIER, Bucket> buckets = generateBuckets(products);
+
+        for (Product product : products) {
+            if (product.getType() == TYPE.P3) {
+                buckets.get(product.getTier()).addProduct(product);
+            }
+        }
 
         int currentP3Score = originalP3Score;
-        double currentVisibility = 1 - (double) currentP3Score / overallScore;
+        double currentVisibility = originalVisibility;
         double previousVisibility = 0;
-        double targetVisibility = Math.min(currentVisibility * multiplier, maxVisibility);
 
         while (currentVisibility < targetVisibility) {
             if (previousVisibility == currentVisibility) {
@@ -47,22 +103,7 @@ public class Main {
             currentVisibility = 1 - (double) currentP3Score / overallScore;
         }
 
-        fillP3Product(finalProductList, buckets);
-        //fillP1Product(finalProductList, products);
-
-        System.out.println(originalP1Score);
-        System.out.println(originalP3Score);
-        System.out.println(originalVisibility);
-        System.out.println(currentVisibility);
-
-        for (int i = 0; i < finalProductList.size(); i++) {
-            System.out.println(i + ": " + finalProductList.get(i));
-        }
-
-        long endTime = System.nanoTime();
-        long duration = endTime - startTime;
-
-        System.out.println("Execution time: " + duration / 1_000_000 + " ms");
+        return buckets;
     }
 
     private static ArrayList<Product> generateProducts(int size, double percentage) {
@@ -75,7 +116,7 @@ public class Main {
         return products;
     }
 
-    private static int getScore(ArrayList<Product> products, TYPE productType) {
+    private static int getScore(List<Product> products, TYPE productType) {
         int sum = 0;
         for (Product p : products) {
             if (p.getType() == productType) {
@@ -85,8 +126,9 @@ public class Main {
         return sum;
     }
 
-    private static Map<TIER, Bucket> getBuckets(ArrayList<Product> products) {
-        EnumMap<TIER, Bucket> buckets = products.stream()
+    private static Map<TIER, Bucket> generateBuckets(ArrayList<Product> products) {
+
+        return products.stream()
                 .collect(Collectors.groupingBy(
                         Product::getTier, () -> new EnumMap<>(TIER.class), Collectors.counting()
                 ))
@@ -97,15 +139,6 @@ public class Main {
                         e -> new Bucket(e.getKey(), e.getValue().intValue()),
                         (e1, e2) -> e1, () -> new EnumMap<>(TIER.class)
                 ));
-
-
-        for (Product product : products) {
-            if (product.getType() == TYPE.P3) {
-                buckets.get(product.getTier()).addProduct(product);
-            }
-        }
-
-        return buckets;
     }
 
     private static Product getLastProductInTopTier(Map<TIER, Bucket> buckets) {
@@ -134,6 +167,7 @@ public class Main {
             for (Product product : bucket.getProducts()) {
                 int indexOffset = product.getTier().startIndex;
                 int resultIndex = Math.max(product.getOriginalIndex(), productBucketIndex + indexOffset);
+                product.setCurrentIndex(resultIndex);
                 finalProductList.set(resultIndex, product);
                 productBucketIndex++;
             }
@@ -153,32 +187,11 @@ public class Main {
 
         for (int i = 0; i < finalProductList.size(); i++) {
             if (finalProductList.get(i) == null && productIndex < products.size()) {
-                finalProductList.set(i, p1products.get(productIndex));
+                Product p1product = p1products.get(productIndex);
+                p1product.setCurrentIndex(i);
+                finalProductList.set(i, p1product);
                 productIndex++;
             }
         }
-    }
-
-    public static int calculateMinScore(int totalProducts) {
-        int minScore = 0;
-        int remainingProducts = totalProducts;
-
-        // Process tiers from the lowest to the highest
-        for (TIER tier : TIER.values()) {
-            int tierCapacity = (tier.endIndex - tier.startIndex + 1); // Number of slots in this tier
-
-            if (remainingProducts <= 0) break; // Stop if all products are placed
-
-            // Determine how many products can be placed in this tier
-            int productsInThisTier = Math.min(remainingProducts, tierCapacity);
-
-            // Calculate score contribution from this tier
-            minScore += productsInThisTier * tier.score;
-
-            // Reduce the remaining products
-            remainingProducts -= productsInThisTier;
-        }
-
-        return minScore;
     }
 }

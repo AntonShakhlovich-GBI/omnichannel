@@ -1,4 +1,4 @@
-public class Product {
+public class Product implements Cloneable {
     private final int originalIndex;
     private int currentIndex;
     private final String name;
@@ -36,10 +36,6 @@ public class Product {
         this.tier = tier;
     }
 
-    public int getCurrentIndex() {
-        return currentIndex;
-    }
-
     public void setCurrentIndex(int currentIndex) {
         this.currentIndex = currentIndex;
     }
@@ -53,5 +49,30 @@ public class Product {
                 ", type=" + type +
                 ", score=" + getScore() +
                 '}';
+    }
+
+    @Override
+    public Product clone() {
+        try {
+            Product clone = (Product) super.clone();
+            clone.tier = this.tier;
+            clone.currentIndex = this.currentIndex;
+            return clone;
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
+    }
+
+    private static final String RESET = "\u001B[0m";  // Reset color
+    private static final String RED = "\u001B[31m";   // Red
+    private static final String GREEN = "\u001B[32m"; // Green
+
+    public String toColoredString() {
+        if (currentIndex < originalIndex) {
+            return GREEN + this + RESET;
+        } else if (currentIndex > originalIndex) {
+            return RED + this + RESET;
+        }
+        return this.toString();
     }
 }
