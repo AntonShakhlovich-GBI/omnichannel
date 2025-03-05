@@ -34,17 +34,16 @@ public class Main {
         double originalVisibility = (double) originalP1Score / overallScore;
         double targetVisibility = Math.min(originalVisibility * multiplier, visibilityLimit);
 
-
         long startTime = System.nanoTime();
 
         // Check If Reordering Algorithm need to be triggered
         Map<TIER, Bucket> bucketsWithMinimalScore = generateP3BucketsMinimalScore(products);
-        int minimalScore = 0;
+        int minimalP3Score = 0;
         for (Bucket bucket : bucketsWithMinimalScore.values()) {
-            minimalScore += getScore(bucket.getProducts(), TYPE.P3);
+            minimalP3Score += getScore(bucket.getProducts(), TYPE.P3);
         }
 
-        double maximumVisibility = 1 - (double) minimalScore / overallScore;
+        double maximumVisibility = 1 - (double) minimalP3Score / overallScore;
 
         Map<TIER, Bucket> buckets;
         if (maximumVisibility < targetVisibility) {
@@ -58,9 +57,20 @@ public class Main {
         fillP3Product(finalProductList, buckets);
         fillP1Product(finalProductList, products);
 
-        System.out.println(originalP1Score);
-        System.out.println(originalP3Score);
-        System.out.println(originalVisibility);
+        System.out.println("Original P1 Score: " + originalP1Score);
+        System.out.println("Original P3 Score: " + originalP3Score);
+        System.out.println("Original Visibility: " + originalVisibility);
+        System.out.println("Multiplier: " + multiplier);
+        System.out.println("Target Visibility: " + targetVisibility);
+
+        int finalP1Score = getScore(finalProductList, TYPE.P1);
+        int finalP3Score = getScore(finalProductList, TYPE.P3);
+        int finalOverallScore = finalP1Score + finalP3Score;
+        double finalVisibility = (double) finalP1Score / finalOverallScore;
+
+        System.out.println("Final P1 Score: " + finalP1Score);
+        System.out.println("Final P3 Score: " + finalP3Score);
+        System.out.println("Final Visibility: " + finalVisibility);
 
         for (int i = 0; i < finalProductList.size(); i++) {
             System.out.println(i + ": " + finalProductList.get(i).toColoredString());
