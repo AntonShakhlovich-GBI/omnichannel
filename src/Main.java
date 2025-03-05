@@ -4,10 +4,19 @@ import java.util.stream.Collectors;
 public class Main {
     public static void main(String[] args) {
         // Settings
-        int pageSize = 120;
-        double originalDistributionRate = 0.6;
-        double multiplier = 1.3;
-        double visibilityLimit = 0.9;
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter page size (int): ");
+        int pageSize = scanner.nextInt();
+
+        System.out.print("Enter original distribution rate (double): ");
+        double originalDistributionRate = scanner.nextDouble();
+
+        System.out.print("Enter multiplier (double): ");
+        double multiplier = scanner.nextDouble();
+
+        System.out.print("Enter visibility limit (double): ");
+        double visibilityLimit = scanner.nextDouble();
 
         ArrayList<Product> products = generateProducts(pageSize, originalDistributionRate);
         for (Product product : products) {

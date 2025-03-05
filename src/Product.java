@@ -7,6 +7,7 @@ public class Product implements Cloneable {
 
     public Product(int originalIndex, String name, TYPE type) {
         this.originalIndex = originalIndex;
+        this.currentIndex = originalIndex;
         this.name = name;
         this.tier = TIER.getTIER(originalIndex);
         this.type = type;
