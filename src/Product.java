@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 public class Product implements Cloneable {
     private final int originalIndex;
     private int currentIndex;
@@ -39,15 +41,17 @@ public class Product implements Cloneable {
 
     public void setCurrentIndex(int currentIndex) {
         this.currentIndex = currentIndex;
+        this.tier = Arrays.stream(TIER.values())
+                .filter(tier -> tier.startIndex <= currentIndex && tier.endIndex >= currentIndex)
+                .findAny().orElse(tier);
     }
 
     @Override
     public String toString() {
         return "Product{" +
                 "originalIndex=" + originalIndex +
-                ", name='" + name + '\'' +
-                ", tier=" + tier +
-                ", type=" + type +
+                ", " + tier +
+                ", " + type +
                 ", score=" + getScore() +
                 '}';
     }

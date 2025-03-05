@@ -49,8 +49,10 @@ public class Main {
         Map<TIER, Bucket> buckets;
         if (maximumVisibility < targetVisibility) {
             buckets = bucketsWithMinimalScore;
+            System.out.println("Burying Algorithm triggered.");
         } else {
             buckets = generateP3BucketsSmart(products, originalP3Score, originalVisibility, targetVisibility, overallScore);
+            System.out.println("Smart Algorithm triggered.");
         }
 
         fillP3Product(finalProductList, buckets);
@@ -59,7 +61,6 @@ public class Main {
         System.out.println(originalP1Score);
         System.out.println(originalP3Score);
         System.out.println(originalVisibility);
-        // System.out.println(currentVisibility);
 
         for (int i = 0; i < finalProductList.size(); i++) {
             System.out.println(i + ": " + finalProductList.get(i).toColoredString());
